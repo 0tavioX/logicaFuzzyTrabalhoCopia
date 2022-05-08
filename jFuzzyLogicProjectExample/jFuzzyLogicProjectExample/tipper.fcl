@@ -1,0 +1,58 @@
+/*
+	Example: A tip calculation FIS (fuzzy inference system)
+	Calculates tip based on 'servie' and 'food'
+
+	If you want to about this example (and fuzzy logic), please 
+	read Matlab's tutorial on fuzzy logic toolbox 
+	http://www.mathworks.com/access/helpdesk/help/pdf_doc/fuzzy/fuzzy.pdf
+
+									Pablo Cingolani 
+									pcingola@users.sourceforge.net
+*/
+
+FUNCTION_BLOCK tipper	// Block definition (there may be more than one block per file)
+
+VAR_INPUT				// Define input variables
+	peso : REAL;
+	defesa : REAL;
+END_VAR
+
+VAR_OUTPUT				// Define output variable
+	eficiencia : REAL;
+END_VAR
+
+FUZZIFY peso			// Fuzzify input variable 'peso': {'leve', 'media' , 'pesada'}
+	TERM leve := (1, 1) (10, 0) ; 
+	TERM media := (7, 0) (12,1) (18,1) (23,0);
+	TERM pesada := (20, 0) (30, 1);
+END_FUZZIFY
+
+FUZZIFY defesa			// Fuzzify input variable 'food': { 'fraca', 'robusta' }
+	TERM fraca := (40, 1) (93,0) ;
+	TERM robusta := (57,0) (110,1);
+END_FUZZIFY
+
+DEFUZZIFY eficiencia			// Defzzzify output variable 'tip' : {'ruim', 'bom', 'excelente' }
+	TERM ruim := (0,1) (4,0);
+	TERM bom := (3,0) (5,1) (7,0);
+	TERM excelente := (6,0) (10,1);
+	METHOD : COG;		// Use 'Center Of Gravity' defuzzification method
+	DEFAULT := 0;		// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	AND : MIN;			// Use 'min' for 'and' (also implicit use 'max' for 'or' to fulfill DeMorgan's Law)
+	ACT : MIN;			// Use 'min' activation method
+	ACCU : MAX;			// Use 'max' accumulation method
+
+	RULE 1 : IF peso IS pesada OR defesa IS fraca THEN eficiencia IS ruim;
+	RULE 2 : IF peso IS leve AND defesa IS fraca THEN eficiencia IS bom;
+	RULE 3 : IF peso IS media AND defesa IS fraca THEN eficiencia is ruim;	
+	RULE 4 : IF peso IS pesada AND defesa IS fraca THEN eficiencia is ruim; 
+	RULE 5 : IF peso IS leve AND defesa IS robusta THEN eficiencia IS excelente;
+	RULE 6 : IF peso IS media AND defesa IS robusta THEN eficiencia IS bom;
+	RULE 7 : IF peso IS pesada AND defesa IS robusta THEN eficiencia IS bom;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
